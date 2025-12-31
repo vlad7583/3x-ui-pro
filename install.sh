@@ -40,8 +40,10 @@ local subscription_path="$4"
 local subscription_port="$5"
 local vless_ws_path="$6"
 local vless_ws_port="$7"
-local config_username="$8"
-local config_password="$9"
+local vless_httpupgrade_path="$8"
+local vless_httpupgrade_port="$9"
+local config_username="$10"
+local config_password="$11"
 
 rm -f /etc/systemd/system/x-ui.service
 rm -rf /etc/x-ui
@@ -51,14 +53,17 @@ rm -rf /usr/bin/x-ui
 echo "n\n" | bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
 x-ui stop
 
-local client_id=$(/usr/local/x-ui/bin/xray-linux-amd64 uuid)
+local client_id1=$(/usr/local/x-ui/bin/xray-linux-amd64 uuid)
+local client_id2=$(/usr/local/x-ui/bin/xray-linux-amd64 uuid)
 local sub_id=$(gen_string 16)
 sqlite3 /etc/x-ui/x-ui.db << EOF
+DELETE FROM settings WHERE key="webCertFile" OR key="webKeyFile";
 INSERT INTO settings (key, value) VALUES ("subEnable", "true");
 INSERT INTO settings (key, value) VALUES ("subPath", "/${subscription_path}/");
 INSERT INTO settings (key, value) VALUES ("subPort", "${subscription_port}");
 INSERT INTO settings (key, value) VALUES ("subURI", "https://${domain}/${subscription_path}/");
 INSERT INTO client_traffics (inbound_id, enable, email, up, down, all_time, expiry_time, total) VALUES (1, 1, "me-${vless_ws_port}", 0, 0, 0, 0, 0);
+INSERT INTO client_traffics (inbound_id, enable, email, up, down, all_time, expiry_time, total) VALUES (2, 1, "me-${vless_httpupgrade_port}", 0, 0, 0, 0, 0);
 INSERT INTO inbounds (user_id, up, down, total, remark, enable, expiry_time, listen, port, protocol, settings, stream_settings, tag, sniffing) VALUES (
 1,
 0,
@@ -73,7 +78,7 @@ ${vless_ws_port},
 '{
   "clients": [
     {
-      "id": "${client_id}",
+      "id": "${client_id1}",
       "security": "",
       "password": "",
       "flow": "",
@@ -117,7 +122,74 @@ ${vless_ws_port},
   "enabled": true,
   "destOverride": [
     "http",
-    "tls"
+    "tls",
+    "quic",
+    "fakedns"
+  ],
+  "metadataOnly": false,
+  "routeOnly": false
+}'
+);
+INSERT INTO inbounds (user_id, up, down, total, remark, enable, expiry_time, listen, port, protocol, settings, stream_settings, tag, sniffing) VALUES (
+1,
+0,
+0,
+0,
+"",
+1,
+0,
+"",
+${vless_httpupgrade_port},
+"vless",
+'{
+  "clients": [
+    {
+      "id": "${client_id2}",
+      "security": "",
+      "password": "",
+      "flow": "",
+      "email": "me-${vless_httpupgrade_port}",
+      "limitIp": 0,
+      "totalGB": 0,
+      "expiryTime": 0,
+      "enable": true,
+      "tgId": 0,
+      "subId": "me-${sub_id}",
+      "comment": "",
+      "reset": 0,
+      "created_at": 0,
+      "updated_at": 0
+    }
+  ],
+  "decryption": "none",
+  "encryption": "none"
+}',
+'{
+  "network": "httpupgrade",
+  "security": "none",
+  "externalProxy": [
+    {
+      "forceTls": "tls",
+      "dest": "${domain}",
+      "port": 443,
+      "remark": ""
+    }
+  ],
+  "httpupgradeSettings": {
+    "acceptProxyProtocol": false,
+    "path": "/${vless_httpupgrade_path}",
+    "host": "",
+    "headers": {}
+  }
+}',
+"inbound-${vless_httpupgrade_port}",
+'{
+  "enabled": false,
+  "destOverride": [
+    "http",
+    "tls",
+    "quic",
+    "fakedns"
   ],
   "metadataOnly": false,
   "routeOnly": false
@@ -153,6 +225,8 @@ local subscription_path="$4"
 local subscription_port="$5"
 local vless_ws_path="$6"
 local vless_ws_port="$7"
+local vless_httpupgrade_path="$8"
+local vless_httpupgrade_port="$9"
 
 systemctl stop nginx
 systemctl disable nginx
@@ -194,10 +268,6 @@ server {
 
     # VLESS WebSocket
     location /${vless_ws_path} {
-        if (\$http_upgrade != "websocket") {
-            return 404;
-        }
-
         proxy_pass http://127.0.0.1:${vless_ws_port};
         proxy_redirect off;
         proxy_http_version 1.1;
@@ -205,7 +275,17 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
-        proxy_read_timeout 1d;
+    }
+
+    # VLESS HTTPUpgrade
+    location /${vless_httpupgrade_path} {
+        proxy_pass http://127.0.0.1:${vless_httpupgrade_port};
+        proxy_redirect off;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
     }
 
     # Dummy Site
@@ -244,6 +324,8 @@ _SUBSCRIPTION_PATH=$(gen_string_rng 18-24)
 _SUBSCRIPTION_PORT=$(gen_port)
 _VLESS_WS_PATH=$(gen_string_rng 18-24)
 _VLESS_WS_PORT=$(gen_port)
+_VLESS_HTTPUPGRADE_PATH=$(gen_string_rng 18-24)
+_VLESS_HTTPUPGRADE_PORT=$(gen_port)
 
 _CONFIG_USERNAME="admin"
 _CONFIG_PASSWORD=$(gen_string 12)
@@ -259,13 +341,13 @@ log_info "[ Domain: ${_DOMAIN} ]"
 log_info "[ Installing Dependencies ]"
 install_dependencies
 log_info "[ Setting up 3X-UI ]"
-setup_3xui "$_DOMAIN" "$_PANEL_PATH" "$_PANEL_PORT" "$_SUBSCRIPTION_PATH" "$_SUBSCRIPTION_PORT" "$_VLESS_WS_PATH" "$_VLESS_WS_PORT" "$_CONFIG_USERNAME" "$_CONFIG_PASSWORD"
+setup_3xui "$_DOMAIN" "$_PANEL_PATH" "$_PANEL_PORT" "$_SUBSCRIPTION_PATH" "$_SUBSCRIPTION_PORT" "$_VLESS_WS_PATH" "$_VLESS_WS_PORT" "$_VLESS_HTTPUPGRADE_PATH" "$_VLESS_HTTPUPGRADE_PORT" "$_CONFIG_USERNAME" "$_CONFIG_PASSWORD"
 log_info "[ Setting up Dummy Site ]"
 setup_dummy
 log_info "[ Setting up Domain ]"
 setup_domain "$_DOMAIN"
 log_info "[ Setting up Nginx ]"
-setup_nginx "$_DOMAIN" "$_PANEL_PATH" "$_PANEL_PORT" "$_SUBSCRIPTION_PATH" "$_SUBSCRIPTION_PORT" "$_VLESS_WS_PATH" "$_VLESS_WS_PORT"
+setup_nginx "$_DOMAIN" "$_PANEL_PATH" "$_PANEL_PORT" "$_SUBSCRIPTION_PATH" "$_SUBSCRIPTION_PORT" "$_VLESS_WS_PATH" "$_VLESS_WS_PORT" "$_VLESS_HTTPUPGRADE_PATH" "$_VLESS_HTTPUPGRADE_PORT"
 log_info "[ Setting up Firewall ]"
 setup_ufw
 

@@ -1,0 +1,31 @@
+# 3x-ui-pro
+
+Простой bash-скрипт для установки и конфигурации панели 3X-UI, подписок и проски-подключений
+под вашим доменом
+
+Что делает скрипт:
+
+- Оставляет открытыми только порты 22 (ssh), 80 (http) и 443 (https);
+- Все приколы по типу заглушки, панели, подписок и подключений доступны по 443 порту;
+- Главная страница взята с https://nometa.xyz как заглушка против проберов и ТСПУ;
+- Метод "reality" не используется, поскольку скрипт пытается обмануть всех недоброжелателей
+  максимально правдоподобной заглушкой, будто бы это обычный сайт/страничка.
+
+## "Быстрый Старт"
+
+```bash
+curl https://raw.githubusercontent.com/vlad7583/3x-ui-pro/master/install.sh --output install.sh
+chmod +x ./install.sh
+sudo ./install.sh your-mega.cool-domain.com
+```
+
+Примерный вывод если всё прошло успешно:
+
+```
+[ Successfully Installed Proxy ]
+URL: https://your-mega.cool-domain.com/[random-generated-path]/"
+Username: admin
+Password: [random-generated-password]
+```
+
+После установки по ссылке будет доступна панель 3X-UI
