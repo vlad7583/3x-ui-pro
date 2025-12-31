@@ -23,9 +23,9 @@ sudo ./install.sh your-mega.cool-domain.com
 
 ```
 [ Successfully Installed Proxy ]
-URL: https://your-mega.cool-domain.com/[random-generated-path]/"
+URL: https://your-mega.cool-domain.com/[сгенерированный путь]/"
 Username: admin
-Password: [random-generated-password]
+Password: [сгенерированный пароль]
 ```
 
 После установки по ссылке будет доступна панель 3X-UI

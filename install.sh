@@ -34,16 +34,16 @@ apt install curl sqlite3 git certbot nginx-full ufw -y
 setup_3xui() {
 
 local domain="$1"
-local panel_path="$2"
-local panel_port="$3"
-local subscription_path="$4"
-local subscription_port="$5"
-local vless_ws_path="$6"
-local vless_ws_port="$7"
-local vless_httpupgrade_path="$8"
-local vless_httpupgrade_port="$9"
-local config_username="$10"
-local config_password="$11"
+local panel_username="$2"
+local panel_password="$3"
+local panel_path="$4"
+local panel_port="$5"
+local subscription_path="$6"
+local subscription_port="$7"
+local vless_ws_path="$8"
+local vless_ws_port="$9"
+local vless_httpupgrade_path="$10"
+local vless_httpupgrade_port="$11"
 
 rm -f /etc/systemd/system/x-ui.service
 rm -rf /etc/x-ui
@@ -62,8 +62,8 @@ INSERT INTO settings (key, value) VALUES ("subEnable", "true");
 INSERT INTO settings (key, value) VALUES ("subPath", "/${subscription_path}/");
 INSERT INTO settings (key, value) VALUES ("subPort", "${subscription_port}");
 INSERT INTO settings (key, value) VALUES ("subURI", "https://${domain}/${subscription_path}/");
-INSERT INTO client_traffics (inbound_id, enable, email, up, down, all_time, expiry_time, total) VALUES (1, 1, "me-${vless_ws_port}", 0, 0, 0, 0, 0);
-INSERT INTO client_traffics (inbound_id, enable, email, up, down, all_time, expiry_time, total) VALUES (2, 1, "me-${vless_httpupgrade_port}", 0, 0, 0, 0, 0);
+INSERT INTO client_traffics (inbound_id, enable, email, up, down, all_time, expiry_time, total) VALUES (1, 1, "first-ws", 0, 0, 0, 0, 0);
+INSERT INTO client_traffics (inbound_id, enable, email, up, down, all_time, expiry_time, total) VALUES (2, 1, "first-httpupgrade", 0, 0, 0, 0, 0);
 INSERT INTO inbounds (user_id, up, down, total, remark, enable, expiry_time, listen, port, protocol, settings, stream_settings, tag, sniffing) VALUES (
 1,
 0,
@@ -82,7 +82,7 @@ ${vless_ws_port},
       "security": "",
       "password": "",
       "flow": "",
-      "email": "me-${vless_ws_port}",
+      "email": "first-ws",
       "limitIp": 0,
       "totalGB": 0,
       "expiryTime": 0,
@@ -148,7 +148,7 @@ ${vless_httpupgrade_port},
       "security": "",
       "password": "",
       "flow": "",
-      "email": "me-${vless_httpupgrade_port}",
+      "email": "first-httpupgrade",
       "limitIp": 0,
       "totalGB": 0,
       "expiryTime": 0,
@@ -197,7 +197,7 @@ ${vless_httpupgrade_port},
 );
 EOF
 
-/usr/local/x-ui/x-ui setting -webBasePath "${panel_path}" -port "${panel_port}" -username "${config_username}" -password "${config_password}"
+/usr/local/x-ui/x-ui setting -webBasePath "${panel_path}" -port "${panel_port}" -username "${panel_username}" -password "${panel_password}"
 x-ui start
 x-ui enable
 
@@ -318,6 +318,8 @@ ufw --force enable
 [[ $EUID -ne 0 ]] && log_err "please run as sudo or root" && exit 1;
 
 _DOMAIN="$1"
+_PANEL_USERNAME="admin"
+_PANEL_PASSWORD=$(gen_string 12)
 _PANEL_PATH=$(gen_string_rng 18-24)
 _PANEL_PORT=$(gen_port)
 _SUBSCRIPTION_PATH=$(gen_string_rng 18-24)
@@ -326,9 +328,6 @@ _VLESS_WS_PATH=$(gen_string_rng 18-24)
 _VLESS_WS_PORT=$(gen_port)
 _VLESS_HTTPUPGRADE_PATH=$(gen_string_rng 18-24)
 _VLESS_HTTPUPGRADE_PORT=$(gen_port)
-
-_CONFIG_USERNAME="admin"
-_CONFIG_PASSWORD=$(gen_string 12)
 
 while true; do
     if [[ -n "$_DOMAIN" ]]; then
@@ -341,7 +340,7 @@ log_info "[ Domain: ${_DOMAIN} ]"
 log_info "[ Installing Dependencies ]"
 install_dependencies
 log_info "[ Setting up 3X-UI ]"
-setup_3xui "$_DOMAIN" "$_PANEL_PATH" "$_PANEL_PORT" "$_SUBSCRIPTION_PATH" "$_SUBSCRIPTION_PORT" "$_VLESS_WS_PATH" "$_VLESS_WS_PORT" "$_VLESS_HTTPUPGRADE_PATH" "$_VLESS_HTTPUPGRADE_PORT" "$_CONFIG_USERNAME" "$_CONFIG_PASSWORD"
+setup_3xui "$_DOMAIN" "$_PANEL_USERNAME" "$_PANEL_PASSWORD" "$_PANEL_PATH" "$_PANEL_PORT" "$_SUBSCRIPTION_PATH" "$_SUBSCRIPTION_PORT" "$_VLESS_WS_PATH" "$_VLESS_WS_PORT" "$_VLESS_HTTPUPGRADE_PATH" "$_VLESS_HTTPUPGRADE_PORT"
 log_info "[ Setting up Dummy Site ]"
 setup_dummy
 log_info "[ Setting up Domain ]"
@@ -353,5 +352,5 @@ setup_ufw
 
 log_ok "[ Successfully Installed Proxy ]"
 log_ok "URL: https://${_DOMAIN}/${_PANEL_PATH}/"
-log_ok "Username: ${_CONFIG_USERNAME}"
-log_ok "Password: ${_CONFIG_PASSWORD}"
+log_ok "Username: ${_PANEL_USERNAME}"
+log_ok "Password: ${_PANEL_PASSWORD}"
