@@ -42,8 +42,8 @@ local subscription_path="$6"
 local subscription_port="$7"
 local vless_ws_path="$8"
 local vless_ws_port="$9"
-local vless_httpupgrade_path="$10"
-local vless_httpupgrade_port="$11"
+local vless_httpupgrade_path="${10}"
+local vless_httpupgrade_port="${11}"
 
 rm -f /etc/systemd/system/x-ui.service
 rm -rf /etc/x-ui
