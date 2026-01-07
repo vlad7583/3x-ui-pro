@@ -14,18 +14,26 @@
 ## "Быстрый Старт"
 
 ```bash
-curl https://raw.githubusercontent.com/vlad7583/3x-ui-pro/master/install.sh --output install.sh
-chmod +x ./install.sh
-sudo ./install.sh your-mega.cool-domain.com
+bash <(curl -sSL https://raw.githubusercontent.com/vlad7583/3x-ui-pro/master/install.sh) example.org
 ```
 
 Примерный вывод если всё прошло успешно:
 
 ```
 [ Successfully Installed Proxy ]
-URL: https://your-mega.cool-domain.com/[сгенерированный путь]/"
+URL: https://example.org/[сгенерированный путь]/"
 Username: admin
 Password: [сгенерированный пароль]
 ```
 
 После установки по ссылке будет доступна панель 3X-UI
+
+_Не теряйте_ ссылку, имя пользователя и пароль! Без них вы _не сможете_ попасть в панель.
+
+## Огромное спасибо
+
+- [3x-ui](https://github.com/MHSanaei/3x-ui) за панельку для пользователей!
+
+- [xray](https://github.com/XTLS/Xray-core) за свой сраный плач о том что "о нет 3x-ui не
+  заставляет пользователей использовать SSL пАТАмуШТа АнЫ прОПлАченИ ЫРАНскыМ ПрАВИтэлСТВАмъ"
+  из-за чего пришлось править скрипт панельки, **идите нахуй уроды**

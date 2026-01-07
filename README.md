@@ -15,18 +15,26 @@ Notices:
 ## Quick Start
 
 ```bash
-curl https://raw.githubusercontent.com/vlad7583/3x-ui-pro/master/install.sh --output install.sh
-chmod +x ./install.sh
-sudo ./install.sh your-mega.cool-domain.com
+bash <(curl -sSL https://raw.githubusercontent.com/vlad7583/3x-ui-pro/master/install.sh) example.org
 ```
 
 Successful output:
 
 ```
 [ Successfully Installed Proxy ]
-URL: https://your-mega.cool-domain.com/[random-generated-path]/"
+URL: https://example.org/[random-generated-path]/"
 Username: admin
 Password: [random-generated-password]
 ```
 
 You can visit 3X-UI panel by URL provided after installation
+
+_Do not_ lose url, username and password! Without it you _will not_ be able to enter panel.
+
+## Special thanks
+
+- [3x-ui](https://github.com/MHSanaei/3x-ui) for panel for users!
+
+- [xray](https://github.com/XTLS/Xray-core) for their crying shit because "oh no 3x-ui do not
+  force users to use ssl BeCAusE THeY'rE paID By IRAN GOVeRnmeNt" and giving me more job to
+  clear script, **fuck you idiots**

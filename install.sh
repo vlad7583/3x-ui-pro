@@ -12,6 +12,10 @@ log_info() {
     echo -e "\e[1;34m$1\e[0m";
 }
 
+tolower() {
+    echo "$1" | LC_ALL=C tr '[:upper:]' '[:lower:]'
+}
+
 gen_port() {
     echo $(( ((RANDOM<<15)|RANDOM) % 55536 + 10000 ))
 }
@@ -50,7 +54,7 @@ rm -rf /etc/x-ui
 rm -rf /usr/local/x-ui
 rm -rf /usr/bin/x-ui
 
-echo "n\n" | bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+echo "n\n" | bash <(curl -sSL https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh | sed 's/prompt_and_setup_ssl() {/prompt_and_setup_ssl() {\nreturn/')
 x-ui stop
 
 local client_id1=$(/usr/local/x-ui/bin/xray-linux-amd64 uuid)
@@ -335,6 +339,7 @@ while true; do
     fi
     echo -en "Enter domain: " && read _DOMAIN
 done
+_DOMAIN="$(tolower "$_DOMAIN")"
 
 log_info "[ Domain: ${_DOMAIN} ]"
 log_info "[ Installing Dependencies ]"
