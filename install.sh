@@ -69,7 +69,7 @@ INSERT INTO inbounds (user_id, up, down, total, remark, enable, expiry_time, lis
 0,
 0,
 0,
-"vless-httpupgrade",
+"",
 1,
 0,
 "",
@@ -146,6 +146,7 @@ git clone https://github.com/leshark/nometa.git /var/www/html/dummy
 
 setup_domain() {
 
+systemctl stop nginx
 certbot certonly --standalone --non-interactive --agree-tos --register-unsafely-without-email -d "$1"
 
 } # setup_domain
